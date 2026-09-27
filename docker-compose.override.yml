@@ -1,0 +1,35 @@
+version: '3.8' 
+
+services: 
+  app: 
+    deploy: 
+      resources: 
+        limits: 
+          cpus: '0.50' 
+          memory: 768M 
+        reservations: 
+          memory: 256M 
+  worker: 
+    deploy: 
+      resources: 
+        limits: 
+          cpus: '0.25' 
+          memory: 384M 
+        reservations: 
+          memory: 128M 
+  scheduler: 
+    deploy: 
+      resources: 
+        limits: 
+          cpus: '0.15' 
+          memory: 128M 
+        reservations: 
+          memory: 64M 
+  waha: 
+    deploy: 
+      resources: 
+        limits: 
+          cpus: '0.35' 
+          memory: 512M 
+        reservations: 
+          memory: 200M

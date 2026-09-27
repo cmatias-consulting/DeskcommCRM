@@ -153,7 +153,7 @@ backups/
 # commit posterior de remoção não tira o blob.
 .qa-backups/
 *.dump
-docker-compose.override.yml
+#docker-compose.override.yml
 .prova/
 
 # Marca do kit: a senha das rotinas que vazou no log já foi trocada (#1054)

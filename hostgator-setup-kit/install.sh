@@ -23,6 +23,7 @@ REPO_DIR="${REPO_DIR:-deskcommcrm}"
 COMPOSE="docker-compose.prod.yml"
 COMPOSE_TRAEFIK="docker-compose.traefik.yml"
 COMPOSE_NPM="docker-compose.npm.yml"
+COMPOSE_EXTERNAL_CADDY="docker-compose.allyco.yml"
 NONINTERACTIVE=0
 [ "${1:-}" = "--yes" ] && NONINTERACTIVE=1
 
@@ -37,6 +38,7 @@ dc() {
   case "${REVERSE_PROXY:-caddy}" in
   traefik) docker compose -f "$COMPOSE" -f "$COMPOSE_TRAEFIK" "$@" ;;
   npm)     docker compose -f "$COMPOSE" -f "$COMPOSE_NPM" "$@" ;;
+  external-caddy) docker compose -f "$COMPOSE" -f "$COMPOSE_EXTERNAL_CADDY" "$@" ;;
   *)       docker compose -f "$COMPOSE" "$@" ;;
   esac
 }
@@ -48,6 +50,7 @@ dc_files() {
   case "${REVERSE_PROXY:-caddy}" in
   traefik) printf -- '-f %s -f %s' "$COMPOSE" "$COMPOSE_TRAEFIK" ;;
   npm)     printf -- '-f %s -f %s' "$COMPOSE" "$COMPOSE_NPM" ;;
+  external-caddy) printf -- '-f %s -f %s' "$COMPOSE" "$COMPOSE_EXTERNAL_CADDY" ;;
   *)       printf -- '-f %s' "$COMPOSE" ;;
   esac
 }
