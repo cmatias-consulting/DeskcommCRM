@@ -1,9 +1,19 @@
 services:
-
   app:
     ports:
       - "127.0.0.1:3000:3000"
 
+    networks:
+      internal:
+      allyco-proxy:
+        aliases:
+          - deskcommcrm-app
+
   caddy:
     profiles:
       - internal-caddy-disabled
+
+networks:
+  allyco-proxy:
+    external: true
+    name: allyco-proxy

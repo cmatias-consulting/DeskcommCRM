@@ -5,6 +5,7 @@ set -euo pipefail
 COMPOSE="docker-compose.prod.yml"
 COMPOSE_TRAEFIK="docker-compose.traefik.yml"
 COMPOSE_NPM="docker-compose.npm.yml"
+COMPOSE_EXTERNAL_CADDY="docker-compose.allyco.yml"
 # Overlay que constrói as imagens no lugar de puxá-las. Existe no repo com
 # `pull_policy: never` nas três imagens e sai do MESMO commit que o `git
 # checkout` deixou no disco — é o caminho de quem não consegue usar as imagens
@@ -71,6 +72,12 @@ dc() {
   case "${REVERSE_PROXY:-caddy}" in
   traefik) docker compose -f "$COMPOSE" -f "$COMPOSE_TRAEFIK" "$@" ;;
   npm)     docker compose -f "$COMPOSE" -f "$COMPOSE_NPM" "$@" ;;
+  external-caddy)
+  docker compose \
+    -f "$COMPOSE" \
+    -f "$COMPOSE_EXTERNAL_CADDY" \
+    "$@"
+  ;;
   *)       docker compose -f "$COMPOSE" "$@" ;;
   esac
 }
@@ -86,6 +93,7 @@ dc_files() {
   case "${REVERSE_PROXY:-caddy}" in
   traefik) printf -- '-f %s -f %s' "$COMPOSE" "$COMPOSE_TRAEFIK" ;;
   npm)     printf -- '-f %s -f %s' "$COMPOSE" "$COMPOSE_NPM" ;;
+  external-caddy) printf -- '-f %s -f %s' "$COMPOSE" "$COMPOSE_EXTERNAL_CADDY" ;;
   *)       printf -- '-f %s' "$COMPOSE" ;;
   esac
 }
