@@ -27,8 +27,11 @@
  *      (`claude-sonnet-50`, `claude-opus-4-9`) — e custo errado não-nulo é pior
  *      que custo desconhecido, porque não acende o sinal de gasto incompleto.
  *
- * Por isso o match é EXATO, com uma única tolerância: o sufixo de data do vendor
- * (`claude-opus-4-1-20250805`). Id que a tabela não conhece volta NULL, que é o
+ * Por isso o match é EXATO, com duas tolerâncias: o sufixo de data do vendor
+ * (`claude-opus-4-1-20250805`) e o prefixo `provider/` do OpenRouter
+ * (`anthropic/claude-sonnet-5`) — este último recortado até a primeira barra,
+ * na mesma ordem da tolerância do sufixo, para um id com prefixo+sufixo também
+ * casar (issue #1880). Id que a tabela não conhece volta NULL, que é o
  * contrato escrito acima.
  */
 
@@ -83,6 +86,14 @@ const USD_PER_MTOK: Record<string, Preco> = {
   'gpt-5.4-mini': { input: 0.75, output: 4.5, cacheRead: 0.075, cacheWrite5m: 0.75, cacheWrite1h: 0.75 },
   'gpt-5.4-nano': { input: 0.2, output: 1.25, cacheRead: 0.02, cacheWrite5m: 0.2, cacheWrite1h: 0.2 },
   'gpt-5.4-pro': { input: 30, output: 180, cacheRead: 30, cacheWrite5m: 30, cacheWrite1h: 30 },
+
+  // Jev (TypeSafe AI), a versão FIXADA em lib/ai/decisao/cliente.ts. Fonte:
+  // docs.typesafe.ai/models.md, conferida em 23/09/2026 — "Charged per input
+  // token. Output tokens are free." A API devolve output_tokens > 0 mesmo assim:
+  // grava-se o real e cobra-se zero. Sem cache no fornecedor: cache = entrada.
+  // Id exato de propósito: quando a versão fixada subir, esta linha sobe junto,
+  // e até lá a versão nova sai com custo NULL — nunca com o preço de outra.
+  'jev-1.13.0': { input: 0.042, output: 0, cacheRead: 0.042, cacheWrite5m: 0.042, cacheWrite1h: 0.042 },
 };
 
 export interface TokenUsage {
@@ -99,10 +110,19 @@ export interface TokenUsage {
  * `startsWith` antigo deixava passar silenciosamente.
  */
 export function precoDoModelo(model: string): Preco | undefined {
+  // O OpenRouter devolve o id com o prefixo `provider/` (`anthropic/claude-…`);
+  // a tabela é indexada sem ele. Recorta até a primeira barra e tenta de novo,
+  // na MESMA ordem da tolerância do sufixo de data, para um id com prefixo+sufixo
+  // (`anthropic/claude-sonnet-5-20250929`) casar também. O id completo segue
+  // tentado PRIMEIRO: um id que a tabela conheça com barra vence o recorte.
+  const semPrefixo = model.includes("/") ? model.slice(model.indexOf("/") + 1) : model;
   return (
     USD_PER_MTOK[model] ??
-    USD_PER_MTOK[model.replace(/-\d{8}$/, '')] ??
-    USD_PER_MTOK[model.replace(/-\d{4}-\d{2}-\d{2}$/, '')]
+    USD_PER_MTOK[model.replace(/-\d{8}$/, "")] ??
+    USD_PER_MTOK[model.replace(/-\d{4}-\d{2}-\d{2}$/, "")] ??
+    USD_PER_MTOK[semPrefixo] ??
+    USD_PER_MTOK[semPrefixo.replace(/-\d{8}$/, "")] ??
+    USD_PER_MTOK[semPrefixo.replace(/-\d{4}-\d{2}-\d{2}$/, "")]
   );
 }
 
